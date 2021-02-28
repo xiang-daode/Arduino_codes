@@ -1,0 +1,37 @@
+/*
+pin2通过一1K欧姆电阻接地,以保证平常是状态LOW
+pin2接通3.3V后,串口输出H
+PC端发送字符后,板子逐一接收并发回给PC显示
+*/
+
+
+int pin2=2;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600); 
+  pinMode(pin2, INPUT); 
+}
+
+void loop() {
+     // put your main code here, to run repeatedly:
+     
+     //当PIN2接上3.3V高电平时,输出状态H:
+     if (digitalRead(pin2)==HIGH){
+        Serial.print('H'); 
+        delay(400);         
+     }
+
+     //平常,因对地有电阻连接,发送状态L
+     if (digitalRead(pin2)==LOW){
+        Serial.println('L'); 
+        delay(400);         
+     }
+
+		 //当PC端有字符发到板子,此处逐一接收单一字符,又逐一发回给PC:
+     if ( digitalRead(pin2)==HIGH  and  Serial.available() > 0) {
+             // get incoming byte:
+             int inByte = Serial.read();
+             Serial.println(char(inByte)); 
+     }
+}

@@ -1,0 +1,45 @@
+#include<Servo.h>
+#include<math.h>
+
+Servo L8;//Center leg
+Servo L9;//Right leg
+Servo L10;//Left leg
+int p8 =0;//Center leg
+int p9 =0;//Right leg
+int p10 =0;//Left leg
+
+int t=0;//for life
+
+void setup() {
+   // put your setup code here, to run once:
+   
+   
+   L8.write(p8);L8.attach(8);  //Center leg 
+   L9.write(p9);L9.attach(9);   //Right leg
+   L10.write(p10);L10.attach(10);//Left leg
+   
+  delay(250);//延时 250毫秒，
+  
+}
+
+void loop() {
+   // put your main code here, to run repeatedly:
+   
+  if(t<628.32*10){  //只走10个周期
+      int x8=(int)(15-15*cos(t/100.0));
+      L8.write(x8);
+      
+      int x9=(int)(25-25*cos(t/100.0));
+      L9.write(x9);   
+     
+      int x10=(int)(25-25*cos(t/100.0));
+      L10.write(x10);
+            
+      delay(15); // 延迟15毫秒，   
+      t+=10;//角度步进
+  }else{
+     //...
+  }
+  
+ }
+

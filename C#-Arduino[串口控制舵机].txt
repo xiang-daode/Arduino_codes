@@ -1,0 +1,177 @@
+/*
+ ********************  Arduino代码  **********************
+
+pin2通过一1K欧姆电阻接地,以保证平常是状态LOW
+pin2接通3.3V后,串口输出H
+PC端发送字符后,板子逐一接收并发回给PC显示
+
+
+#include<Servo.h>
+#include<math.h>
+int pin2=2;
+Servo L6;//接6脚(PWM)
+int p6 =30;//初始角度
+
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600); 
+  pinMode(pin2, INPUT); 
+  L6.attach(6); L6.write(p6); //6脚挂接与初始化
+  delay(250);//延时 250毫秒，
+}
+
+void loop() {
+     // put your main code here, to run repeatedly:
+     
+     //当PIN2接上3.3V高电平时,输出状态H:
+     if (digitalRead(pin2)==HIGH){
+        Serial.print('H'); 
+        delay(400);         
+     }
+
+     //平常,因对地有电阻连接,发送状态L
+     if (digitalRead(pin2)==LOW){
+        Serial.println('L'); 
+        delay(400);         
+     }
+
+     //当PC端有字符发到板子,此处逐一接收单一字符,又逐一发回给PC:
+     if ( Serial.available() > 0) {  //digitalRead(pin2)==HIGH  and  
+             // get incoming byte:
+             int inByte = Serial.read();
+             Serial.println(char(inByte));
+             if(char(inByte)=='B') L6.write(60); //舵机写入60度
+             if(char(inByte)=='S') L6.write(0); //舵机写入0度
+             if(char(inByte)=='M') L6.write(30);  //舵机写入30度
+     }
+}
+ 
+ */
+
+/*   ========================  C#代码   ==========================    */
+
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.IO.Ports; //串口通讯必需
+
+
+namespace WindowsApplication1
+{
+    public partial class FormBase : Form
+    {
+
+        //创建串口对象实例:
+        SerialPort port1 = new SerialPort();
+        
+        public FormBase()
+        {
+            InitializeComponent();
+        }
+
+        //自动获取PC机中的有效串口地址:
+        private void Port_Select()
+        {
+            string[] ports = SerialPort.GetPortNames();
+            foreach (string port in ports)
+            {
+                comboBox1.Items.Add(port);
+            }
+        }
+
+        //打开串口:
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Port_Select();
+            this.comboBox1.SelectedIndex = 2;
+            this.comboBox2.SelectedIndex = 0;
+            this.textBox1.Text = "";
+            this.Text = "C#_串口收发器[9600,N,8,1]   ----八塔,项道德制作";
+            timer1.Enabled = false;
+
+            if (button1.Text == "关闭串口")  //当要关闭串口的时候
+            {
+                port1.DiscardOutBuffer();
+                port1.DiscardInBuffer();
+                port1.Close();
+                button1.Text = "打开串口";
+                label3.Text = "串口当前状况：未打开";
+                comboBox1.Enabled = true;
+                comboBox2.Enabled = true;
+                timer1.Enabled = false;
+            }
+            else if (button1.Text == "打开串口") //当要打开串口的时候
+            {
+                try
+                {
+                    //串口设置区:
+                    port1.PortName = comboBox1.SelectedItem.ToString();//as "COM3";
+                    port1.BaudRate = Convert.ToInt32(comboBox2.SelectedItem);//as 9600
+                    port1.Parity = System.IO.Ports.Parity.None;//校验
+                    port1.DataBits = 8;//数据位  
+                    port1.StopBits = System.IO.Ports.StopBits.One;//停止位:1
+                    string zs = ", 奇偶校验:N,  数据位:8, 停止位:1.";
+                    //-----------------------------
+                    port1.RtsEnable = true;
+                    port1.Open();
+                    port1.DiscardOutBuffer();
+                    port1.DiscardInBuffer();
+                    button1.Text = "关闭串口";
+                    comboBox1.Enabled = false;
+                    comboBox2.Enabled = false;
+                    label3.Text = "当前串口号:" + comboBox1.SelectedItem.ToString() + ", 波特率:" + comboBox2.SelectedItem.ToString() + zs;
+                    timer1.Enabled = true;
+                }
+                catch
+                {
+                    button1.Text = "打开串口";
+                    label3.Text = "串口：" + comboBox1.SelectedItem.ToString() + "打开失败";
+                    MessageBox.Show("该串口无法打开");
+                }
+            }
+        }
+
+        //发送内容:
+        private void button3_Click(object sender, EventArgs e)
+        {
+            port1.Write(new byte[] { (byte)'S', (byte)'B', (byte)'M', (byte)'S' }, 0, 4);
+        }
+
+        //循环地读:
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            byte[] readBuffer = new byte[1];
+            Application.DoEvents();
+            port1.Read(readBuffer, 0, 1);
+            textBox2.Text  += System.Text.Encoding.Default.GetString(readBuffer);
+            if (textBox2.Text.Length > 80) textBox2.Text = "";
+        }
+
+        //向舵机写入0,角度制:
+        private void button2_Click(object sender, EventArgs e)
+        {
+            port1.Write(new byte[] { (byte)'S' }, 0, 1);
+        }
+
+        //向舵机写入30,角度制:
+        private void button4_Click(object sender, EventArgs e)
+        {
+            port1.Write(new byte[] { (byte)'M' }, 0, 1);
+        }
+
+        //向舵机写入60,角度制:
+        private void button5_Click(object sender, EventArgs e)
+        {
+            port1.Write(new byte[] { (byte)'B' }, 0, 1);
+        }        
+
+
+    }
+}

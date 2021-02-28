@@ -1,0 +1,46 @@
+/*
+pin2通过一1K欧姆电阻接地,以保证平常是状态LOW
+pin2接通3.3V后,串口输出H
+PC端发送字符后,板子逐一接收并发回给PC显示
+*/
+
+#include<Servo.h>
+#include<math.h>
+int pin2=2;
+Servo L6;//接6脚(PWM)
+int p6 =30;//初始角度
+
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600); 
+  pinMode(pin2, INPUT); 
+  L6.attach(6); L6.write(p6); //6脚挂接与初始化
+  delay(250);//延时 250毫秒，
+}
+
+void loop() {
+     // put your main code here, to run repeatedly:
+     
+     //当PIN2接上3.3V高电平时,输出状态H:
+     if (digitalRead(pin2)==HIGH){
+        Serial.print('H'); 
+        delay(400);         
+     }
+
+     //平常,因对地有电阻连接,发送状态L
+     if (digitalRead(pin2)==LOW){
+        Serial.println('L'); 
+        delay(400);         
+     }
+
+     //当PC端有字符发到板子,此处逐一接收单一字符,又逐一发回给PC:
+     if ( Serial.available() > 0) {  //digitalRead(pin2)==HIGH  and  
+             // get incoming byte:
+             int inByte = Serial.read();
+             Serial.println(char(inByte));
+             if(char(inByte)=='B') L6.write(60); //舵机写入60度
+             if(char(inByte)=='S') L6.write(0); //舵机写入0度
+             if(char(inByte)=='M') L6.write(30);  //舵机写入30度
+     }
+}

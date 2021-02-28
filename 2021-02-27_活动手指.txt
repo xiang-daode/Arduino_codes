@@ -1,0 +1,80 @@
+#include<Servo.h>
+#include<math.h>
+
+Servo L9;//电机
+int p9 =0;//波输出口
+int Num=0;//按钮记忆,11(记忆),12(复现),13(示范)
+int Val=0;//电机角度值*0.5:  0...65
+int t=0;//计时器
+int cnt=5;//自动循环遍数
+
+void setup() {
+   // put your setup code here, to run once:
+   L9.write(p9);L9.attach(9); //舵机接在9脚  
+   Serial.begin(9600);
+   delay(50); 
+}
+
+void loop() {
+   // put your main code here, to run repeatedly:
+   
+  
+   int A0_v=analogRead(A0);//读取电位器模拟信号
+   
+   //11号按钮按下:
+   if(digitalRead(11)==HIGH){
+      Num=11;
+      Val=A0_v/16;
+   }
+   //12号按钮按下:
+  if(digitalRead(12)==HIGH){
+       Num=12;
+       t=0;       
+   }
+   //13号按钮按下:
+  if(digitalRead(13)==HIGH){
+       Num=13;cnt=5;
+       t=0;
+   }
+   
+  //串口发出数据: 
+  if(Num != 0){
+       Serial.println(Num);//11,12,13
+       Serial.println(A0_v);//0...1023 
+       delay(50); 
+  }
+
+  //记忆中:
+  if(Num==11){
+        Val=A0_v/16;
+        L9.write(2*Val);
+        delay(50);
+  }
+  
+  //按照记忆走一次:
+  if(Num==12){
+     while(t<629){
+        int x=(Val-Val*cos(t/100));
+        L9.write(x);
+        delay(30);
+        t+=10; 
+     }
+  }
+
+  //示范,全幅走5遍:
+  if(Num==13){    
+    while(cnt>0){
+         t=0;
+         while(t<629){
+            int x=(65-65*cos(t/100));
+            L9.write(x);
+            delay(30);
+            t+=5; 
+         }
+         cnt--;
+      } 
+  }
+   
+ }
+
+
